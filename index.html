@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>五百字說華語｜音檔索引</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <div class="w-72 bg-white shadow-lg overflow-y-auto">
+    <div class="p-4 text-xl font-bold border-b">📚 課程列表</div>
+    <ul id="lessonList" class="p-2 space-y-2"></ul>
+  </div>
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col">
+    <div class="p-4 border-b bg-white flex justify-between items-center">
+      <div id="currentTitle" class="text-lg font-semibold">請選擇課程</div>
+      <input id="search" placeholder="搜尋課程..." class="border px-2 py-1 rounded" />
+    </div>
+
+    <div class="flex-1 flex flex-col items-center justify-center">
+      <audio id="player" controls class="w-3/4"></audio>
+
+      <div class="mt-4 flex gap-2">
+        <button onclick="prevLesson()" class="px-4 py-2 bg-gray-300 rounded">⏮ 上一課</button>
+        <button onclick="nextLesson()" class="px-4 py-2 bg-blue-500 text-white rounded">下一課 ⏭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 👉 把你的 Google Drive 音檔填在這裡
+const lessons = [
+  { title: "第1課", id: "1rsmT3MI-CQClg6DndEnbxKidC2oTpOYR" },
+  { title: "第2課", id: "1pQYqBDeM73ooFowFNLyb-2KSywHYyAug" },
+  { title: "第3課", id: "1rLJnjA2_eSb9WSyBDWJ3yDnkgS5LVkEF" }
+];
+
+let currentIndex = -1;
+
+const listEl = document.getElementById("lessonList");
+const player = document.getElementById("player");
+const titleEl = document.getElementById("currentTitle");
+const searchInput = document.getElementById("search");
+
+function renderList(filter = "") {
+  listEl.innerHTML = "";
+  lessons
+    .filter(l => l.title.includes(filter))
+    .forEach((lesson, index) => {
+      const li = document.createElement("li");
+      li.className = "p-2 bg-gray-100 rounded cursor-pointer hover:bg-blue-100";
+      li.innerText = lesson.title;
+      li.onclick = () => playLesson(index);
+      listEl.appendChild(li);
+    });
+}
+
+function getDriveUrl(id) {
+  return `https://drive.google.com/uc?export=preview&id=${id}`;
+}
+
+function playLesson(index) {
+  currentIndex = index;
+  const lesson = lessons[index];
+  player.src = getDriveUrl(lesson.id);
+  player.play();
+  titleEl.innerText = lesson.title;
+
+  // 更新 URL（可分享）
+  history.replaceState(null, "", `?lesson=${index}`);
+}
+
+function nextLesson() {
+  if (currentIndex < lessons.length - 1) {
+    playLesson(currentIndex + 1);
+  }
+}
+
+function prevLesson() {
+  if (currentIndex > 0) {
+    playLesson(currentIndex - 1);
+  }
+}
+
+// 自動播放下一課
+player.addEventListener("ended", () => {
+  nextLesson();
+});
+
+// 搜尋
+searchInput.addEventListener("input", (e) => {
+  renderList(e.target.value);
+});
+
+// 初始化
+renderList();
+
+// 支援分享連結
+const params = new URLSearchParams(window.location.search);
+const lessonIndex = params.get("lesson");
+if (lessonIndex !== null) {
+  playLesson(parseInt(lessonIndex));
+}
+</script>
+
+</body>
+</html>
