@@ -80,10 +80,23 @@ function chooseVoice(){
 }
 function speak(text,rate){
   if(!('speechSynthesis' in window)){$('status').textContent='此瀏覽器不支援語音播放';return;}
-  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='zh-TW'; u.rate=Number(rate)||1;
+  speechSynthesis.cancel();
+
+  const requestedRate = Number(rate) || 1;
+  // 部分瀏覽器／zh-TW 系統語音會把 0.75 與 1.0 的差異壓得很小，
+  // 因此慢速模式做實際播放速率校正，讓聽感確實明顯慢於正常速度。
+  const actualRate = requestedRate < 1 ? 0.55 : 1;
+
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='zh-TW';
+  u.rate=actualRate;
+  u.pitch=1;
+  u.volume=1;
+
   const v=chooseVoice(); if(v) u.voice=v;
-  u.onstart=()=>$('status').textContent=u.rate<1?'🔊 慢速播放中':'🔊 正常速度播放中';
-  u.onend=()=>$('status').textContent=''; u.onerror=()=>$('status').textContent='播放失敗，請確認裝置已安裝中文語音';
+  u.onstart=()=>$('status').textContent=requestedRate<1?'🔊 慢速播放中':'🔊 正常速度播放中';
+  u.onend=()=>$('status').textContent='';
+  u.onerror=()=>$('status').textContent='播放失敗，請確認裝置已安裝中文語音';
   speechSynthesis.speak(u);
 }
 document.querySelectorAll('[data-kind]').forEach(b=>b.addEventListener('click',()=>{if(!filtered.length)return;const d=filtered[index];speak(b.dataset.kind==='sentence'?d[4]:d[0],b.dataset.rate)}));
